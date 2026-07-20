@@ -1,0 +1,32 @@
+plugins {
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+group = 'de.jangassen'
+version = '3.1.0-martinaudio-javafx22'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+javafx {
+    version = '22.0.2'
+    modules = ['javafx.controls', 'javafx.fxml']
+}
+
+application {
+    mainModule = 'nsmenufx_samples'
+    mainClass = 'de.jangassen.nsmenufx.samples.StandardMacApp'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':')
+    implementation 'org.openjfx:javafx-controls:22.0.2'
+    implementation 'org.openjfx:javafx-fxml:22.0.2'
+}

@@ -1,0 +1,48 @@
+plugins {
+    id 'java-library'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+group = 'de.jangassen'
+version = '3.1.0-javafx22'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+javafx {
+    version = '22.0.2'
+    modules = ['javafx.controls', 'javafx.fxml']
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation files('libs/jfa-1.2.0-jna515.jar')
+    implementation 'net.java.dev.jna:jna:5.15.0'
+    
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    archiveBaseName = 'nsmenufx'
+}
+
+task copyToCommonJavaFx(type: Copy) {
+    dependsOn jar
+    from jar.archiveFile
+    into '../Martin-Audio-Production/common/common-javafx/libs'
+    doFirst {
+        file('../Martin-Audio-Production/common/common-javafx/libs').mkdirs()
+    }
+}
+
+build.finalizedBy copyToCommonJavaFx
