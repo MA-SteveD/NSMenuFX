@@ -20,8 +20,13 @@ repositories {
     mavenCentral()
 }
 
+// JFA is a sibling checkout rather than a published artefact, so this build pulls its jar in.
+// Named once, and used both to locate the source and to declare the dependency below.
+ext.jfaJarName = 'jfa-1.2.0-jna515.jar'
+ext.jfaJar = file("${projectDir}/../jfa/build/libs/${jfaJarName}")
+
 dependencies {
-    implementation files('libs/jfa-1.2.0-jna515.jar')
+    implementation files("libs/${jfaJarName}")
     implementation 'net.java.dev.jna:jna:5.15.0'
     
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
@@ -36,13 +41,17 @@ jar {
     archiveBaseName = 'nsmenufx'
 }
 
-task copyToCommonJavaFx(type: Copy) {
-    dependsOn jar
-    from jar.archiveFile
-    into '../Martin-Audio-Production/common/common-javafx/libs'
-    doFirst {
-        file('../Martin-Audio-Production/common/common-javafx/libs').mkdirs()
-    }
+/*
+ * Refresh the bundled JFA jar from the sibling checkout before compiling against it. Skipped when
+ * that checkout is absent - the copy in libs/ is committed, so a clone of this project alone still
+ * builds. Build JFA first when its source has changed; nothing here triggers a build over there.
+ *
+ * This build tells nobody about its own jar: common-javafx pulls nsmenufx from build/libs itself.
+ */
+task copyJfaJar(type: Copy) {
+    onlyIf { jfaJar.exists() }
+    from jfaJar
+    into "${projectDir}/libs"
 }
 
-build.finalizedBy copyToCommonJavaFx
+compileJava.dependsOn copyJfaJar

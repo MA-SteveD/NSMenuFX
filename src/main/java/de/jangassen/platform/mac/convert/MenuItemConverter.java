@@ -62,6 +62,19 @@ public class MenuItemConverter {
             ImageConverter.convert(newValue).ifPresent(nsMenuItem::setImage)
     );
 
+    // Both states are seeded as well as observed: an item is very often already disabled or hidden
+    // by the time the bar is built, and a listener alone would not fire until it next changed.
+    // Enabled requires NSMenu.setAutoenablesItems(false), which MenuConverter does.
+    nsMenuItem.setEnabled(!menuItem.isDisable());
+    menuItem.disableProperty().addListener((observable, oldValue, newValue) ->
+            nsMenuItem.setEnabled(!newValue)
+    );
+
+    nsMenuItem.setHidden(!menuItem.isVisible());
+    menuItem.visibleProperty().addListener((observable, oldValue, newValue) ->
+            nsMenuItem.setHidden(!newValue)
+    );
+
     NSCleaner.register(menuItem, nsMenuItem);
     registerCallbackForCleanup(menuItem, foundationCallback);
     return nsMenuItem;

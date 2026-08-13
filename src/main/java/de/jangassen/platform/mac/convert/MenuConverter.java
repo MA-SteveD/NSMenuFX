@@ -22,6 +22,12 @@ public class MenuConverter {
     String text = Optional.ofNullable(menu.getText()).orElse("");
     NSMenu nsMenu = NSMenu.alloc().initWithTitle(text);
 
+    // The enabled state is JavaFX's to decide, through MenuItem.disableProperty. Left at AppKit's
+    // default of YES, every item is re-enabled whenever the menu opens, because its target is a
+    // FoundationCallback that responds to any action - so a disabled item would render enabled and
+    // stay clickable, firing an action the UI state forbids.
+    nsMenu.setAutoenablesItems(false);
+
     Map<MenuItem, NSMenuItem> fxToNsMenuItems = new HashMap<>();
     menu.getItems()
             .forEach(item -> MenuConverter.addMenuItem(nsMenu, fxToNsMenuItems, item));

@@ -63,6 +63,9 @@ public class MacNativeAdapter implements NativeAdapter {
 
   public void setMenuBar(List<Menu> menus) {
     NSMenu menu = NSMenu.alloc().init();
+    // Built here rather than by MenuConverter, so it needs the same treatment: without this, AppKit
+    // re-enables every top-level menu whenever the bar is used, overriding the wrapper items below.
+    menu.setAutoenablesItems(false);
     menus.stream().map(this::getMenuBarItem).forEach(menu::addItem);
 
     sharedApplication.setMainMenu(menu);
@@ -75,6 +78,18 @@ public class MacNativeAdapter implements NativeAdapter {
     NSMenu nsMenu = MenuConverter.convert(menu);
     NSMenuItem wrapperItem = NSMenuItem.alloc().init();
     wrapperItem.setSubmenu(nsMenu);
+
+    // MenuConverter tracks the items within the menu, but this wrapper is what represents the menu
+    // itself in the bar, so hiding or disabling a whole top-level menu has to be tracked here.
+    wrapperItem.setHidden(!menu.isVisible());
+    menu.visibleProperty().addListener((observable, oldValue, newValue) ->
+            wrapperItem.setHidden(!newValue)
+    );
+
+    wrapperItem.setEnabled(!menu.isDisable());
+    menu.disableProperty().addListener((observable, oldValue, newValue) ->
+            wrapperItem.setEnabled(!newValue)
+    );
 
     NSCleaner.register(menu, wrapperItem);
     return wrapperItem;
