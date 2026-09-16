@@ -3,12 +3,16 @@ package de.jangassen.platform.mac.convert;
 import de.jangassen.jfa.FoundationCallback;
 import de.jangassen.jfa.FoundationCallbackRegistry;
 import de.jangassen.jfa.ObjcToJava;
+import de.jangassen.jfa.appkit.NSControlStateValue;
 import de.jangassen.jfa.appkit.NSEventModifierFlags;
 import de.jangassen.jfa.appkit.NSMenuItem;
 import de.jangassen.jfa.cleanup.NSCleaner;
+import javafx.beans.property.BooleanProperty;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.RadioMenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -75,9 +79,46 @@ public class MenuItemConverter {
             nsMenuItem.setHidden(!newValue)
     );
 
+    convertSelectedState(menuItem, nsMenuItem);
+
     NSCleaner.register(menuItem, nsMenuItem);
     registerCallbackForCleanup(menuItem, foundationCallback);
     return nsMenuItem;
+  }
+
+  /**
+   * Carries the check mark of an item that has one. Seeded as well as observed, for the same reason as
+   * the enabled and hidden states above: an item is routinely already selected by the time the bar is
+   * built, and a listener alone would not fire until the value next changed.
+   *
+   * <p>
+   * Both selectable kinds are handled. They share no common supertype below {@link MenuItem} that
+   * exposes the property, so the two cases are read separately and then treated alike.
+   */
+  private static void convertSelectedState(MenuItem menuItem, NSMenuItem nsMenuItem) {
+    BooleanProperty selected = selectedProperty(menuItem);
+    if (selected == null) {
+      return;
+    }
+
+    nsMenuItem.setState(toControlStateValue(selected.get()));
+    selected.addListener((observable, oldValue, newValue) ->
+            nsMenuItem.setState(toControlStateValue(newValue))
+    );
+  }
+
+  private static BooleanProperty selectedProperty(MenuItem menuItem) {
+    if (menuItem instanceof CheckMenuItem) {
+      return ((CheckMenuItem) menuItem).selectedProperty();
+    }
+    if (menuItem instanceof RadioMenuItem) {
+      return ((RadioMenuItem) menuItem).selectedProperty();
+    }
+    return null;
+  }
+
+  private static int toControlStateValue(boolean selected) {
+    return selected ? NSControlStateValue.NSControlStateValueOn : NSControlStateValue.NSControlStateValueOff;
   }
 
   private static void updateAction(MenuItem menuItem, NSMenuItem nsMenuItem, EventHandler<ActionEvent> eventHandler) {
